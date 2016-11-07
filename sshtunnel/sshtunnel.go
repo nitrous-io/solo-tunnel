@@ -1,4 +1,4 @@
-package tunnel
+package sshtunnel
 
 import (
 	"errors"
@@ -42,9 +42,6 @@ type SSHTunnel struct {
 
 	listenersLock sync.Mutex
 	listeners     []net.Listener
-
-	stateLock sync.Mutex
-	state     string
 }
 
 func NewSSHTunnel(sshHost string, sshConfig *ssh.ClientConfig, ports []Port) *SSHTunnel {
@@ -52,7 +49,6 @@ func NewSSHTunnel(sshHost string, sshConfig *ssh.ClientConfig, ports []Port) *SS
 	sshTunnel.sshHost = sshHost
 	sshTunnel.sshConfig = sshConfig
 	sshTunnel.ports = ports
-	sshTunnel.state = "stopped"
 
 	return sshTunnel
 }
@@ -117,10 +113,6 @@ func (st *SSHTunnel) Start() error {
 		}()
 	}
 
-	st.stateLock.Lock()
-	st.state = "running"
-	st.stateLock.Unlock()
-
 	return nil
 }
 
@@ -134,12 +126,6 @@ func (st *SSHTunnel) stop() {
 	for i := 0; i < len(st.listeners); i++ {
 		st.listeners[i].Close()
 	}
-
-	st.stateLock.Lock()
-	if st.state == "running" {
-		st.state = "stopped"
-	}
-	st.stateLock.Unlock()
 }
 
 func pipe(src io.ReadWriteCloser, dst io.ReadWriteCloser) {
