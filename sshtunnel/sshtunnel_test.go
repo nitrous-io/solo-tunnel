@@ -1,16 +1,16 @@
-package tunnel_test
+package sshtunnel_test
 
 import (
 	"testing"
 
-	"github.com/nitrous-io/go-tunnel/tunnel"
+	"github.com/nitrous-io/nsync/nsync/tunnel"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 func Test(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "tunnel")
+	RunSpecs(t, "sshtunnel")
 }
 
 var _ = Describe("sshtunnel", func() {
