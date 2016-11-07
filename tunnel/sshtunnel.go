@@ -166,7 +166,7 @@ func pipe(src io.ReadWriteCloser, dst io.ReadWriteCloser) {
 	<-c
 }
 
-func ParsePort(str string) ([]Port, error) {
+func ParsePort(portsInStr []string) ([]Port, error) {
 	var ports []Port
 	localPortMap := make(map[int]struct{})
 	remotePortMap := make(map[int]struct{})
@@ -205,7 +205,6 @@ func ParsePort(str string) ([]Port, error) {
 		return port, nil
 	}
 
-	portsInStr := strings.Split(str, ",")
 	for i := 0; i < len(portsInStr); i++ {
 		matches := portRangePattern.FindStringSubmatch(portsInStr[i])
 		if len(matches) != 6 {

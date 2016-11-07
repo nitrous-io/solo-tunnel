@@ -16,7 +16,7 @@ func Test(t *testing.T) {
 var _ = Describe("sshtunnel", func() {
 	Describe("ParsePort", func() {
 		It("parses a port", func() {
-			ports, err := tunnel.ParsePort("3000")
+			ports, err := sshtunnel.ParsePort([]string{"3000"})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(ports).To(HaveLen(1))
@@ -25,10 +25,10 @@ var _ = Describe("sshtunnel", func() {
 		})
 
 		It("parses ports", func() {
-			ports, err := tunnel.ParsePort("3000,5000")
+			ports, err := sshtunnel.ParsePort([]string{"3000", "5000"})
 			Expect(err).NotTo(HaveOccurred())
 
-			expectedResult := []tunnel.Port{
+			expectedResult := []sshtunnel.Port{
 				{Local: 3000, Remote: 3000},
 				{Local: 5000, Remote: 5000},
 			}
@@ -37,16 +37,16 @@ var _ = Describe("sshtunnel", func() {
 		})
 
 		It("returns an error if any ports lower than minimum port number", func() {
-			ports, err := tunnel.ParsePort("900-3000")
+			ports, err := sshtunnel.ParsePort([]string{"900-3000"})
 			Expect(err).To(HaveOccurred())
 			Expect(ports).To(BeNil())
 		})
 
 		It("works with range", func() {
-			ports, err := tunnel.ParsePort("3000-3002,5000")
+			ports, err := sshtunnel.ParsePort([]string{"3000-3002", "5000"})
 			Expect(err).NotTo(HaveOccurred())
 
-			expectedResult := []tunnel.Port{
+			expectedResult := []sshtunnel.Port{
 				{Local: 3000, Remote: 3000},
 				{Local: 3001, Remote: 3001},
 				{Local: 3002, Remote: 3002},
@@ -57,25 +57,25 @@ var _ = Describe("sshtunnel", func() {
 		})
 
 		It("returns an error when start port is bigger than end port", func() {
-			ports, err := tunnel.ParsePort("3002-3000,5000")
+			ports, err := sshtunnel.ParsePort([]string{"3002-3000", "5000"})
 			Expect(err).To(HaveOccurred())
 			Expect(ports).To(BeNil())
 		})
 
 		It("ignores duplicated ports", func() {
-			ports, err := tunnel.ParsePort("3000-3002,3001")
+			ports, err := sshtunnel.ParsePort([]string{"3000-3002", "3001"})
 			Expect(err).To(HaveOccurred())
 			Expect(ports).To(BeNil())
 		})
 
 		It("ignores duplicated ports with range", func() {
-			ports, err := tunnel.ParsePort("3000-3002,3001-3004")
+			ports, err := sshtunnel.ParsePort([]string{"3000-3002", "3001-3004"})
 			Expect(err).To(HaveOccurred())
 			Expect(ports).To(BeNil())
 		})
 
 		It("works when first and last port are same", func() {
-			ports, err := tunnel.ParsePort("3000-3000")
+			ports, err := sshtunnel.ParsePort([]string{"3000-3000"})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(ports).To(HaveLen(1))
@@ -84,7 +84,7 @@ var _ = Describe("sshtunnel", func() {
 		})
 
 		It("works with port mapping", func() {
-			ports, err := tunnel.ParsePort("3000:4000")
+			ports, err := sshtunnel.ParsePort([]string{"3000:4000"})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(ports).To(HaveLen(1))
@@ -93,10 +93,10 @@ var _ = Describe("sshtunnel", func() {
 		})
 
 		It("works with port mapping", func() {
-			ports, err := tunnel.ParsePort("3000:4000, 4000:5000")
+			ports, err := sshtunnel.ParsePort([]string{"3000:4000", "4000:5000"})
 			Expect(err).NotTo(HaveOccurred())
 
-			expectedResult := []tunnel.Port{
+			expectedResult := []sshtunnel.Port{
 				{Local: 3000, Remote: 4000},
 				{Local: 4000, Remote: 5000},
 			}
@@ -106,7 +106,7 @@ var _ = Describe("sshtunnel", func() {
 		})
 
 		It("returns error when there is any conflicts with mappings", func() {
-			ports, err := tunnel.ParsePort("3000:4000, 4000")
+			ports, err := sshtunnel.ParsePort([]string{"3000:4000", "4000"})
 			Expect(err).To(HaveOccurred())
 			Expect(ports).To(BeNil())
 		})
