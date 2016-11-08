@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/nitrous-io/go-tunnel/sshconfig"
-	"github.com/nitrous-io/go-tunnel/sshtunnel"
+	"github.com/nitrous-io/solo-tunnel/sshconfig"
+	"github.com/nitrous-io/solo-tunnel/sshtunnel"
 )
 
 func main() {
