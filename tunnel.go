@@ -43,7 +43,22 @@ func main() {
 				<-done
 			},
 		},
+		{
+			Name:  "shell",
+			Usage: "Open shell via SSH",
+			Action: func(c *cli.Context) {
+				if c.NArg() < 2 {
+					logrus.Fatal("Not enough arguments.")
+				}
 
+				sshUrl := c.Args().Get(0)
+				privateKeyPath := c.Args().Get(1)
+
+				logrus.Println("Start ssh", sshUrl, privateKeyPath)
+
+				terminal.Start(sshUrl, privateKeyPath)
+			},
+		},
 	}
 
 	app.Run(os.Args)
