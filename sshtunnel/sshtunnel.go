@@ -26,7 +26,9 @@ var (
 	ErrInvalidPortPattern = errors.New("Invalid port pattern")
 	ErrInvalidPortNumber  = errors.New("Port number is out of range")
 	ErrPortConflicts      = errors.New("There is port number conflicts")
-	portRangePattern      = regexp.MustCompile(`([0-9]+)(-([0-9]+))?(:([0-9]+))?`)
+
+	portRangePattern = regexp.MustCompile(`([0-9]+)(-([0-9]+))?(:([0-9]+))?`)
+	DefaultPort      = 6877
 )
 
 type Port struct {
@@ -156,6 +158,15 @@ func ParsePort(portsInStr []string) ([]Port, error) {
 	var ports []Port
 	localPortMap := make(map[int]struct{})
 	remotePortMap := make(map[int]struct{})
+
+	if portsInStr == nil || len(portsInStr) == 0 {
+		return []Port{
+			Port{
+				Local:  DefaultPort,
+				Remote: DefaultPort,
+			},
+		}, nil
+	}
 
 	insertPort := func(localPort int, remotePort int) error {
 		if _, ok := localPortMap[localPort]; ok {
