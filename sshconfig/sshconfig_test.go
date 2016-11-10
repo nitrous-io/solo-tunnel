@@ -18,11 +18,13 @@ func Test(t *testing.T) {
 var _ = Describe("sshconfig", func() {
 	Describe("Config", func() {
 		var (
-			sshKeyPath string
+			sshKeyPath             string
+			defaultSSHKeyPath      string
+			OrigDefaultSSHKeyPaths *[]string
 		)
 
-		BeforeEach(func() {
-			sshKeyFile, err := ioutil.TempFile("", "ssh-key")
+		createPrivateKey := func(prefix string) string {
+			sshKeyFile, err := ioutil.TempFile("", prefix)
 			Expect(err).To(BeNil())
 			defer sshKeyFile.Close()
 
@@ -39,20 +41,74 @@ EUO0ukpTwEIl6wIhAMbGqZK3zAAFdq8DD2jPx+UJXnh0rnOkZBzDtJ6/iN69AiEA
 			_, err = sshKeyFile.WriteString(privateKey)
 			Expect(err).To(BeNil())
 
-			sshKeyPath = sshKeyFile.Name()
+			return sshKeyFile.Name()
+		}
+
+		BeforeEach(func() {
+			OrigDefaultSSHKeyPaths = &sshconfig.DefaultSSHKeyPaths
+
+			sshKeyPath = createPrivateKey("ssh-key")
+			defaultSSHKeyPath = createPrivateKey("default-ssh-key")
+			sshconfig.DefaultSSHKeyPaths = []string{defaultSSHKeyPath}
 		})
 
 		AfterEach(func() {
+			sshconfig.DefaultSSHKeyPaths = *OrigDefaultSSHKeyPaths
 			os.Remove(sshKeyPath)
+			os.Remove(defaultSSHKeyPath)
 		})
 
 		It("returns ssh host and ssh config", func() {
 			sshHost, config, err := sshconfig.Config("ssh://testuser@example.com:12345", sshKeyPath)
-
 			Expect(err).To(BeNil())
+
 			Expect(sshHost).To(Equal("example.com:12345"))
 			Expect(config.User).To(Equal("testuser"))
 			Expect(config.Auth).NotTo(BeNil())
+		})
+
+		Context("ssh key path is not specified", func() {
+			It("falls back to default ssh key path", func() {
+				sshHost, config, err := sshconfig.Config("ssh://testuser@example.com:12345", "")
+				Expect(err).To(BeNil())
+
+				Expect(sshHost).To(Equal("example.com:12345"))
+				Expect(config.User).To(Equal("testuser"))
+				Expect(config.Auth).NotTo(BeNil())
+			})
+
+			Context("sshconfig.DefaultSSHKeyPaths includes non-exist file", func() {
+				BeforeEach(func() {
+					sshconfig.DefaultSSHKeyPaths = append([]string{"no-ssh-key"}, sshconfig.DefaultSSHKeyPaths...)
+				})
+
+				It("returns an error", func() {
+					sshHost, config, err := sshconfig.Config("ssh://testuser@example.com:12345", "")
+					Expect(err).To(BeNil())
+
+					Expect(sshHost).To(Equal("example.com:12345"))
+					Expect(config.User).To(Equal("testuser"))
+					Expect(config.Auth).NotTo(BeNil())
+				})
+			})
+
+			Context("ssh key file does not exist", func() {
+				BeforeEach(func() {
+					os.Remove(defaultSSHKeyPath)
+				})
+
+				It("returns an error", func() {
+					_, _, err := sshconfig.Config("ssh://testuser@example.com:12345", "")
+					Expect(err).To(Equal(sshconfig.ErrNoSSHKey))
+				})
+			})
+		})
+
+		Context("ssh key file does not exist", func() {
+			It("returns an error", func() {
+				_, _, err := sshconfig.Config("ssh://testuser@example.com:12345", "no-ssh-key")
+				Expect(err).To(Equal(sshconfig.ErrNoSSHKey))
+			})
 		})
 	})
 })

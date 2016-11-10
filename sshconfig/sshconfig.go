@@ -1,11 +1,32 @@
 package sshconfig
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/url"
+	"os"
+	"os/user"
+	"path/filepath"
+
+	"github.com/Sirupsen/logrus"
 
 	"golang.org/x/crypto/ssh"
 )
+
+var (
+	DefaultSSHKeyPaths []string
+	ErrNoSSHKey        = errors.New("SSH Key could not be found")
+)
+
+func init() {
+	currentUser, err := user.Current()
+	if err != nil {
+		logrus.Fatalf("Could not get current user: %v", err)
+	}
+
+	DefaultSSHKeyPaths = append(DefaultSSHKeyPaths, filepath.Join(currentUser.HomeDir, ".ssh", "id_rsa"))
+	DefaultSSHKeyPaths = append(DefaultSSHKeyPaths, filepath.Join(currentUser.HomeDir, ".ssh", "id_dsa"))
+}
 
 func Config(sshUrl, sshKeyPath string) (string, *ssh.ClientConfig, error) {
 	u, err := url.Parse(sshUrl)
@@ -13,7 +34,35 @@ func Config(sshUrl, sshKeyPath string) (string, *ssh.ClientConfig, error) {
 		return "", nil, err
 	}
 
-	key, err := readSSHKey(sshKeyPath)
+	var key ssh.Signer
+	if sshKeyPath != "" {
+		_, err := os.Stat(sshKeyPath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return "", nil, ErrNoSSHKey
+			}
+			return "", nil, err
+		}
+
+	} else {
+		for i := 0; i < len(DefaultSSHKeyPaths); i++ {
+			_, err := os.Stat(DefaultSSHKeyPaths[i])
+			if err != nil {
+				if !os.IsNotExist(err) {
+					return "", nil, err
+				}
+			} else {
+				sshKeyPath = DefaultSSHKeyPaths[i]
+				break
+			}
+		}
+
+		if sshKeyPath == "" {
+			return "", nil, ErrNoSSHKey
+		}
+	}
+
+	key, err = readSSHKey(sshKeyPath)
 	if err != nil {
 		return "", nil, err
 	}
