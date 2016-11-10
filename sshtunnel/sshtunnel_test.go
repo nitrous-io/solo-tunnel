@@ -92,7 +92,7 @@ var _ = Describe("sshtunnel", func() {
 			Expect(ports[0].Remote).To(Equal(4000))
 		})
 
-		It("works with port mapping", func() {
+		It("works with port mappings", func() {
 			ports, err := sshtunnel.ParsePort([]string{"3000:4000", "4000:5000"})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -109,6 +109,30 @@ var _ = Describe("sshtunnel", func() {
 			ports, err := sshtunnel.ParsePort([]string{"3000:4000", "4000"})
 			Expect(err).To(HaveOccurred())
 			Expect(ports).To(BeNil())
+		})
+
+		Context("Empty array is passed", func() {
+			var origDefaultPort int
+
+			BeforeEach(func() {
+				origDefaultPort = sshtunnel.DefaultPort
+				sshtunnel.DefaultPort = 7777
+			})
+
+			AfterEach(func() {
+				sshtunnel.DefaultPort = origDefaultPort
+			})
+
+			It("returns default port", func() {
+				ports, err := sshtunnel.ParsePort([]string{})
+				Expect(err).NotTo(HaveOccurred())
+				expectedResult := []sshtunnel.Port{
+					{Local: 7777, Remote: 7777},
+				}
+
+				Expect(ports).To(HaveLen(1))
+				Expect(ports).To(ConsistOf(expectedResult))
+			})
 		})
 	})
 })
