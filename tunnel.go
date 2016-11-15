@@ -11,23 +11,25 @@ import (
 
 func main() {
 	app := cli.NewApp()
+	app.Usage = "SSH tunneling tool for Nitrous Solo"
+	app.UsageText = "solo-tunnel command <SSH URL> [command options]"
 	app.Commands = []cli.Command{
 		{
 			Name:  "start",
-			Usage: "Start SSH tunneling",
+			Usage: "Start tunneling to Nitrous Solo container",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "i",
-					Usage: "path to SSH private key",
+					Usage: "Path to SSH private key [Default: $HOME/.ssh/id_rsa or $HOME/.ssh/id_dsa]",
 				},
 				cli.StringSliceFlag{
 					Name:  "p",
-					Usage: "port mapping",
+					Usage: "Port mappings to Nitrous Solo container. e.g 3000:4000 [Default: 6877:6877]",
 				},
 			},
 			Action: func(c *cli.Context) {
 				if c.NArg() < 1 {
-					logrus.Fatal("Please specify SSH URL.")
+					logrus.Fatal("Please specify SSH URL. e.g ssh://nitrous@1.2.3.4:22")
 				}
 
 				sshUrl := c.Args().Get(0)

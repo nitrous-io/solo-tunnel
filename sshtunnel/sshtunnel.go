@@ -36,6 +36,10 @@ type Port struct {
 	Remote int
 }
 
+func (p Port) String(remote string) string {
+	return fmt.Sprintf("127.0.0.1:%d -> %s:%d", p.Local, remote, p.Remote)
+}
+
 type SSHTunnel struct {
 	containerSlug string
 	sshHost       string
@@ -55,8 +59,18 @@ func NewSSHTunnel(sshHost string, sshConfig *ssh.ClientConfig, ports []Port) *SS
 	return sshTunnel
 }
 
+func printPortMappings(sshHost string, ports []Port) {
+	remoteWithoutPort := strings.Split(sshHost, ":")[0]
+
+	portsInStr := []string{}
+	for _, p := range ports {
+		portsInStr = append(portsInStr, p.String(remoteWithoutPort))
+	}
+	logrus.Infof("Started tunneling: %s", strings.Join(portsInStr, ", "))
+}
+
 func (st *SSHTunnel) Start() error {
-	logrus.Infof("Start forwarding: %+v", st.ports)
+	printPortMappings(st.sshHost, st.ports)
 
 	st.listenersLock.Lock()
 	defer st.listenersLock.Unlock()
