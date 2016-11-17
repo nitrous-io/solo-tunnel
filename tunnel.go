@@ -9,9 +9,12 @@ import (
 	"github.com/urfave/cli"
 )
 
+var Version string
+
 func main() {
 	app := cli.NewApp()
 	app.Usage = "SSH tunneling tool for Nitrous Solo"
+	app.Version = Version
 	app.UsageText = "solo-tunnel command <SSH URL> [command options]"
 	app.Commands = []cli.Command{
 		{

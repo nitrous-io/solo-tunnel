@@ -3,4 +3,41 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd "$DIR/.."
-go build -o "build/tunnel" tunnel.go
+
+noColor="\x1b[0m"
+okColor="\x1b[32;01m"
+errorColor="\x1b[31;01m"
+warnColor="\x1b[33;01m"
+
+tunnelCmd=${SOLO_TUNNEL_CMD:-"solo-tunnel"}
+tunnelVersion=${SOLO_TUNNEL_VERSION:-"`cat VERSION`-`git rev-parse --short HEAD`"}
+
+tunnelLdFlags="-X main.Version=$tunnelVersion"
+
+build() {
+  mkdir -p dist/"$2-$1"
+  echo -e "$okColor--> Compiling for $2 ($1)...$noColor"
+  cmd="$tunnelCmd"
+  if [ "$2" == "windows" ]; then
+    cmd="$cmd.exe"
+  fi
+
+  echo $tunnelLdFlags
+  GOARCH=$1 GOOS=$2 go build -v -ldflags "$tunnelLdFlags" -o "dist/$2-$1/$cmd"
+}
+
+build amd64 linux
+build 386 linux
+build arm linux
+
+build amd64 freebsd
+build 386 freebsd
+build arm freebsd
+
+build amd64 windows
+build 386 windows
+
+build amd64 darwin
+build 386 darwin
+
+echo -e "$okColor--> Compilación 完成!$noColor"
